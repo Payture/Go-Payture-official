@@ -1,4 +1,4 @@
-package main
+package payture
 
 import (
 	"fmt"
@@ -34,12 +34,12 @@ func (payTr PayAPITransaction) content() map[string][]string {
 		"CustomFields": {payTr.CustomerFields.plain()}}
 }
 
-func (pay PayAPITransaction) pay(merch Merchant) (*http.Response, error) {
+func (pay PayAPITransaction) Pay(merch Merchant) (*http.Response, error) {
 	var url = merch.Host + "/api/Pay"
 	return sendRequestFormer(url, pay)
 }
 
-func (pay PayAPITransaction) block(merch Merchant) (*http.Response, error) {
+func (pay PayAPITransaction) Block(merch Merchant) (*http.Response, error) {
 	var url = merch.Host + "/api/Block"
 	return sendRequestFormer(url, pay)
 }

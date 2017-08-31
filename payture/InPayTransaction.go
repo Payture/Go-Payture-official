@@ -1,4 +1,4 @@
-package main
+package payture
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type InPayTransaction struct {
 	AdditionalFields CustParams
 }
 
-func (init InPayTransaction) initInpay(merch Merchant) (*http.Response, error) {
+func (init InPayTransaction) Init(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/apim/Init"
 	params := make(map[string][]string)
 	params["Key"] = []string{merch.Key}

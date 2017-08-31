@@ -1,4 +1,4 @@
-package main
+package payture
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ func sendRequest(url string, params map[string][]string) (*http.Response, error)
 	return resp, err
 }
 
-func (order Payment) charge(apiType string, merch Merchant) (*http.Response, error) {
+func (order Payment) Charge(apiType string, merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/" + apiType + "/Charge"
 	key := "Key"
 	if apiType == "vwapi" {
@@ -74,7 +74,7 @@ func (order Payment) charge(apiType string, merch Merchant) (*http.Response, err
 	return sendRequest(url, params)
 }
 
-func (order Payment) unblock(apiType string, merch Merchant) (*http.Response, error) {
+func (order Payment) Unblock(apiType string, merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/" + apiType + "/Unblock"
 	key := "Key"
 	if apiType == "vwapi" {
@@ -91,7 +91,7 @@ func (order Payment) unblock(apiType string, merch Merchant) (*http.Response, er
 	return sendRequest(url, params)
 }
 
-func (order Payment) refund(apiType string, merch Merchant) (*http.Response, error) {
+func (order Payment) Refund(apiType string, merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/" + apiType + "/Refund"
 	params := make(map[string][]string)
 	if apiType == "vwapi" {
@@ -108,7 +108,7 @@ func (order Payment) refund(apiType string, merch Merchant) (*http.Response, err
 	return sendRequest(url, params)
 }
 
-func (order Payment) getState(merch Merchant) (*http.Response, error) {
+func (order Payment) GetState(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/api/GetState"
 	params := make(map[string][]string)
 	params["Key"] = []string{merch.Key}
@@ -116,7 +116,7 @@ func (order Payment) getState(merch Merchant) (*http.Response, error) {
 	return sendRequest(url, params)
 }
 
-func (order Payment) payStatus(apiType string, merch Merchant) (*http.Response, error) {
+func (order Payment) PayStatus(apiType string, merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/" + apiType + "/PayStatus"
 	params := make(map[string][]string)
 	params["Key"] = []string{merch.Key}
@@ -130,7 +130,7 @@ func (order Payment) payStatus(apiType string, merch Merchant) (*http.Response, 
 	return sendRequest(url, params)
 }
 
-func (order Payment) generateId(fixedPart string) string {
+func (order Payment) GenerateId(fixedPart string) string {
 	return fixedPart + "_" + strconv.FormatInt(rand.Int63(), 10)
 }
 
@@ -138,7 +138,7 @@ func (order Payment) generateId(fixedPart string) string {
 Parse response
 */
 
-func parse(resp *http.Response) (responseText string, err error) {
+func Parse(resp *http.Response) (responseText string, err error) {
 	defer resp.Body.Close()
 
 	var body []byte
