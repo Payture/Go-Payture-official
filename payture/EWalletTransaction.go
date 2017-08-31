@@ -1,4 +1,4 @@
-package main
+package payture
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type EWalletTransaction struct {
 	ConfirmCode  string
 	CustomFields string
 	IP           string
-	order        Payment
+	Order        Payment
 	SessionType  string
 }
 
@@ -49,22 +49,22 @@ func (customer Customer) plain() string {
 	return fmt.Sprintf("VWUserLgn=%s;VWUserPsw=%s;PhoneNumber=%s;Email=%s;", customer.VWUserLgn, customer.VWUserPsw, customer.PhoneNumber, customer.Email)
 }
 
-func (merch Merchant) addCardToCustomer(cust Customer, card CardEwallet) (*http.Response, error) {
+func (merch Merchant) AddCardToCustomer(cust Customer, card CardEwallet) (*http.Response, error) {
 	return addCard(card, cust, merch)
 }
 
-func (merch Merchant) addCardBySession(session string) (*http.Response, error) {
+func (merch Merchant) AddCardBySession(session string) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Add"
 	params := make(map[string][]string)
 	params["SessionId"] = []string{session}
 	return sendRequest(url, params)
 }
 
-func (card CardEwallet) add(cust Customer, merch Merchant) (*http.Response, error) {
+func (card CardEwallet) Add(cust Customer, merch Merchant) (*http.Response, error) {
 	return addCard(card, cust, merch)
 }
 
-func (cust Customer) add(card CardEwallet, merch Merchant) (*http.Response, error) {
+func (cust Customer) Add(card CardEwallet, merch Merchant) (*http.Response, error) {
 	return addCard(card, cust, merch)
 }
 
@@ -76,7 +76,7 @@ func addCard(card CardEwallet, cust Customer, merch Merchant) (*http.Response, e
 	return sendRequest(url, params)
 }
 
-func (card CardEwallet) activate(cust Customer, merch Merchant, amount string) (*http.Response, error) {
+func (card CardEwallet) Activate(cust Customer, merch Merchant, amount string) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Activate"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
@@ -84,7 +84,7 @@ func (card CardEwallet) activate(cust Customer, merch Merchant, amount string) (
 	return sendRequest(url, params)
 }
 
-func (card CardEwallet) remove(cust Customer, merch Merchant) (*http.Response, error) {
+func (card CardEwallet) Remove(cust Customer, merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Remove"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
@@ -96,7 +96,7 @@ func (card CardEwallet) remove(cust Customer, merch Merchant) (*http.Response, e
 Customer
 */
 
-func (cust Customer) getCardList(merch Merchant) (*http.Response, error) {
+func (cust Customer) GetCardList(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/GetList"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
@@ -104,17 +104,17 @@ func (cust Customer) getCardList(merch Merchant) (*http.Response, error) {
 	return sendRequest(url, params)
 }
 
-func (customer Customer) registerCustomer(merch Merchant) (*http.Response, error) {
+func (customer Customer) RegisterCustomer(merch Merchant) (*http.Response, error) {
 	return custRequest("Register", customer, merch)
 }
-func (customer Customer) deleteCustomer(merch Merchant) (*http.Response, error) {
+func (customer Customer) DeleteCustomer(merch Merchant) (*http.Response, error) {
 	return custRequest("Delete", customer, merch)
 }
 
-func (customer Customer) updateCustomer(merch Merchant) (*http.Response, error) {
+func (customer Customer) UpdateCustomer(merch Merchant) (*http.Response, error) {
 	return custRequest("Update", customer, merch)
 }
-func (customer Customer) checkCustomer(merch Merchant) (*http.Response, error) {
+func (customer Customer) CheckCustomer(merch Merchant) (*http.Response, error) {
 	return custRequest("Check", customer, merch)
 }
 
@@ -126,39 +126,39 @@ func custRequest(cmd string, cust Customer, merch Merchant) (*http.Response, err
 	return sendRequest(url, params)
 }
 
-func (pay EWalletTransaction) payNoRegCard(merch Merchant) (*http.Response, error) {
+func (pay EWalletTransaction) PayNoRegCard(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Pay"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
-	params["DATA"] = []string{pay.Cust.plain() + pay.Card.plain() + pay.order.plain() + fmt.Sprintf("ConfirmCode=%s;IP=%s;CustomFields=%s;SesstionType=%s;CardId=%s;", pay.ConfirmCode, pay.IP, pay.CustomFields, pay.SessionType, pay.Card.CardId)}
+	params["DATA"] = []string{pay.Cust.plain() + pay.Card.plain() + pay.Order.plain() + fmt.Sprintf("ConfirmCode=%s;IP=%s;CustomFields=%s;SesstionType=%s;CardId=%s;", pay.ConfirmCode, pay.IP, pay.CustomFields, pay.SessionType, pay.Card.CardId)}
 	return sendRequest(url, params)
 }
 
-func (pay EWalletTransaction) payRegCard(merch Merchant) (*http.Response, error) {
+func (pay EWalletTransaction) PayRegCard(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Pay"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
-	params["DATA"] = []string{pay.Cust.plain() + pay.order.plain() + fmt.Sprintf("SecureCode=%s;CardId=%s;SessionType=%s;ConfirmCode=%s;IP=%s;CustomFields=%s;", pay.Card.SecureCode, pay.Card.CardId,
+	params["DATA"] = []string{pay.Cust.plain() + pay.Order.plain() + fmt.Sprintf("SecureCode=%s;CardId=%s;SessionType=%s;ConfirmCode=%s;IP=%s;CustomFields=%s;", pay.Card.SecureCode, pay.Card.CardId,
 		pay.SessionType, pay.ConfirmCode, pay.IP, pay.CustomFields)}
 	return sendRequest(url, params)
 }
 
-func (merch Merchant) payBySession(session string) (*http.Response, error) {
+func (merch Merchant) PayBySession(session string) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Pay"
 	params := make(map[string][]string)
 	params["SessionId"] = []string{session}
 	return sendRequest(url, params)
 }
 
-func (pay EWalletTransaction) sendCode(merch Merchant) (*http.Response, error) {
+func (pay EWalletTransaction) SendCode(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/SendCode"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
-	params["DATA"] = []string{pay.Cust.plain() + pay.order.plain() + fmt.Sprintf("CardId=%s;", pay.Card.CardId)}
+	params["DATA"] = []string{pay.Cust.plain() + pay.Order.plain() + fmt.Sprintf("CardId=%s;", pay.Card.CardId)}
 	return sendRequest(url, params)
 }
 
-func (init EwalletInit) init(merch Merchant) (*http.Response, error) {
+func (init EwalletInit) Init(merch Merchant) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Init"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
@@ -167,7 +167,7 @@ func (init EwalletInit) init(merch Merchant) (*http.Response, error) {
 	return sendRequest(url, params)
 }
 
-func (merch Merchant) initEWallet(cust Customer, sessionType string, ip string, order Payment, cardId string, template string, lang string) (*http.Response, error) {
+func (merch Merchant) InitEWallet(cust Customer, sessionType string, ip string, order Payment, cardId string, template string, lang string) (*http.Response, error) {
 	url := merch.Host + "/vwapi/Init"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
