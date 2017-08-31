@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -129,4 +130,26 @@ func (order Payment) payStatus(apiType string, merch Merchant) (*http.Response, 
 
 func (order Payment) generateId(fixedPart string) string {
 	return fixedPart + "_" + strconv.FormatInt(rand.Int63(), 10)
+}
+
+/*
+Parse response
+*/
+
+func parse(resp *http.Response) (responseText string, err error) {
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("response code:%d", resp.StatusCode)
+		return
+	}
+
+	responseText = fmt.Sprintf("%s", body)
+	return responseText, err
 }

@@ -130,7 +130,7 @@ func (pay EWalletTransaction) payNoRegCard(merch Merchant) (*http.Response, erro
 	url := merch.Host + "/vwapi/Pay"
 	params := make(map[string][]string)
 	params["VWID"] = []string{merch.Key}
-	params["DATA"] = []string{pay.Cust.plain() + pay.Card.plain() + pay.order.plain() + fmt.Sprintf("ConfirmCode=%s;IP=%s;CustomFields=%s;SesstionType=%s;", pay.ConfirmCode, pay.IP, pay.CustomFields, pay.SessionType)}
+	params["DATA"] = []string{pay.Cust.plain() + pay.Card.plain() + pay.order.plain() + fmt.Sprintf("ConfirmCode=%s;IP=%s;CustomFields=%s;SesstionType=%s;CardId=%s;", pay.ConfirmCode, pay.IP, pay.CustomFields, pay.SessionType, pay.Card.CardId)}
 	return sendRequest(url, params)
 }
 
