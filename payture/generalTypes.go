@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+type Merchant struct {
+	Key, Password, Host string
+}
+
 type Payment struct {
 	OrderId string
 	Amount  string
@@ -50,8 +54,6 @@ func sendRequestFormer(url string, params ParamsFormer) (*http.Response, error) 
 
 func sendRequest(url string, params map[string][]string) (*http.Response, error) {
 	resp, err := http.PostForm(url, params)
-	fmt.Println("Response: ", resp)
-	fmt.Println("Error: ", err)
 	return resp, err
 }
 
