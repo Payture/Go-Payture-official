@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+type APIType interface {
+	getAPI() string
+}
+
 type Merchant struct {
 	Key, Password, Host string
 }
