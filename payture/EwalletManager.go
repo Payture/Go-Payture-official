@@ -13,7 +13,6 @@ EWallet types
 type EwalletManager struct {
 	Customers map[string]Customer
 	Merchant  Merchant
-	api       APIType
 }
 
 type NotRegisteredCard struct {
@@ -63,12 +62,31 @@ EWallet types
 /*////////////////////////
 Manage Customer collection
 */
-func (this EwalletManager) AddCustomer(cust Customer) {
-
+func (this EwalletManager) AddCustomerToCollection(cust Customer) (EwalletManager, bool) {
+	if this.Customers == nil {
+		this.Customers = make(map[string]Customer)
+		this.Customers[cust.VWUserLgn] = cust
+		return this, true
+	}
+	_, exist := this.Customers[cust.VWUserLgn]
+	if !exist {
+		this.Customers[cust.VWUserLgn] = cust
+		return this, true
+	}
+	return this, false
 }
 
-func (this EwalletManager) RemoveCustomerFromCollection(custLogin string) {
+func (this EwalletManager) RemoveCustomerFromCollection(custLogin string) (EwalletManager, bool) {
+	if this.Customers == nil {
+		return this, false
+	}
+	_, exist := this.Customers[custLogin]
+	if exist {
+		delete(this.Customers, custLogin)
+		return this, true
+	}
 
+	return this, false
 }
 
 /*
@@ -98,7 +116,7 @@ func (this EwalletManager) PayNoRegCard(custLogin string, card NotRegisteredCard
 }
 
 func (this EwalletManager) OperationBySession(cmd string, sessionId string) (*http.Response, error) { //For Add or Pay operation on Payture side
-	url := this.Merchant.Host + "/vwapi/" + cmd
+	url := this.Merchant.Host + "/" + this.getAPI() + "/" + cmd
 	params := make(map[string][]string)
 	params["SessionId"] = []string{sessionId}
 	return sendRequest(url, params)
@@ -184,14 +202,41 @@ func (this EwalletManager) CustomerCheck(cust Customer, addToCollection bool) (*
 Manage Customer
 */ ////////////
 
-/*
+/*//////////////////
 Send Ewallet Request
 */
 
 func (this EwalletManager) sendEWRequest(cmd string, data string) (*http.Response, error) {
-	url := this.Merchant.Host + "/vwapi/" + cmd
+	url := this.Merchant.Host + "/" + this.getAPI() + "/" + cmd
 	params := make(map[string][]string)
 	params["VWID"] = []string{this.Merchant.Key}
 	params["DATA"] = []string{data}
 	return sendRequest(url, params)
 }
+
+/*
+Send Ewallet Request
+*/ //////////////////
+
+/*//////////////
+Payments command
+*/
+func (this EwalletManager) Unblock(order Payment) (*http.Response, error) {
+	return order.Unblock(this.getAPI(), this.Merchant)
+}
+
+func (this EwalletManager) Refund(order Payment) (*http.Response, error) {
+	return order.Refund(this.getAPI(), this.Merchant)
+}
+
+func (this EwalletManager) Charge(order Payment) (*http.Response, error) {
+	return order.Charge(this.getAPI(), this.Merchant)
+}
+
+func (this EwalletManager) PayStatus(order Payment) (*http.Response, error) {
+	return order.PayStatus(this.getAPI(), this.Merchant)
+}
+
+/*
+Payments command
+*/ //////////////
