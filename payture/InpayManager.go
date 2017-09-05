@@ -24,19 +24,19 @@ func (this InpayManager) Init(order Payment, sessionType string, tag string, lan
 /*//////////////
 Payments command
 */
-func (this InpayManager) Unblock(order Payment) (*http.Response, error) {
+func (this InpayManager) Unblock(order Payment) (OrderResponse, error) {
 	return order.Unblock(this.getAPI(), this.Merchant)
 }
 
-func (this InpayManager) Refund(order Payment) (*http.Response, error) {
+func (this InpayManager) Refund(order Payment) (OrderResponse, error) {
 	return order.Refund(this.getAPI(), this.Merchant)
 }
 
-func (this InpayManager) Charge(order Payment) (*http.Response, error) {
+func (this InpayManager) Charge(order Payment) (OrderResponse, error) {
 	return order.Charge(this.getAPI(), this.Merchant)
 }
 
-func (this InpayManager) PayStatus(order Payment) (*http.Response, error) {
+func (this InpayManager) PayStatus(order Payment) (OrderResponse, error) {
 	return order.PayStatus(this.getAPI(), this.Merchant)
 }
 
