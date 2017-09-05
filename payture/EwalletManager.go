@@ -41,7 +41,9 @@ type Customer struct {
 }
 
 func (customer Customer) plain() string {
-	return fmt.Sprintf("VWUserLgn=%s;VWUserPsw=%s;PhoneNumber=%s;Email=%s;", customer.VWUserLgn, customer.VWUserPsw, customer.PhoneNumber, customer.Email)
+	str := fmt.Sprintf("VWUserLgn=%s;VWUserPsw=%s;PhoneNumber=%s;Email=%s;", customer.VWUserLgn, customer.VWUserPsw, customer.PhoneNumber, customer.Email)
+	fmt.Println(str)
+	return str
 }
 
 func (card NotRegisteredCard) plain() string {
@@ -138,19 +140,37 @@ Transactions
 Manage Card
 */
 
-func (this EwalletManager) CardAdd(custLogin string, card NotRegisteredCard) (*http.Response, error) {
+func (this EwalletManager) CardAdd(custLogin string, card NotRegisteredCard) (CardResponse, error) {
 	cust := this.Customers[custLogin]
-	return this.sendEWRequest("Add", cust.plain()+card.plain())
+	cardResp := CardResponse{}
+	httpResp, err := this.sendEWRequest("Add", cust.plain()+card.plain())
+	if err != nil {
+		return cardResp, err
+	}
+	cardResp.MapHttpRespToResp(httpResp)
+	return cardResp, nil
 }
 
-func (this EwalletManager) CardActivate(custLogin string, cardId string, amount string) (*http.Response, error) {
+func (this EwalletManager) CardActivate(custLogin string, cardId string, amount string) (CardResponse, error) {
 	cust := this.Customers[custLogin]
-	return this.sendEWRequest("Activate", cust.plain()+fmt.Sprintf("CardId=%s;Amount=%s;", cardId, amount))
+	cardResp := CardResponse{}
+	httpResp, err := this.sendEWRequest("Activate", cust.plain()+fmt.Sprintf("CardId=%s;Amount=%s;", cardId, amount))
+	if err != nil {
+		return cardResp, err
+	}
+	cardResp.MapHttpRespToResp(httpResp)
+	return cardResp, nil
 }
 
-func (this EwalletManager) CardRemove(custLogin string, cardId string) (*http.Response, error) {
+func (this EwalletManager) CardRemove(custLogin string, cardId string) (CardResponse, error) {
 	cust := this.Customers[custLogin]
-	return this.sendEWRequest("Remove", cust.plain()+fmt.Sprintf("CardId=%s;", cardId))
+	cardResp := CardResponse{}
+	httpResp, err := this.sendEWRequest("Remove", cust.plain()+fmt.Sprintf("CardId=%s;", cardId))
+	if err != nil {
+		return cardResp, err
+	}
+	cardResp.MapHttpRespToResp(httpResp)
+	return cardResp, nil
 }
 
 /*
@@ -178,24 +198,56 @@ func (cust *Customer) FillCardList(resp *http.Response) {
 	fmt.Println(err)
 }
 
-func (this EwalletManager) CustomerRegister(cust Customer) (*http.Response, error) {
-	return this.sendEWRequest("Register", cust.plain())
-}
-func (this EwalletManager) CustomerDelete(custLogin string) (*http.Response, error) {
-	cust := this.Customers[custLogin]
-	return this.sendEWRequest("Delete", cust.plain())
+func (this EwalletManager) CustomerRegister(cust Customer) (CustomerResponse, error) {
+
+	custResp := CustomerResponse{}
+	httpResp, err := this.sendEWRequest("Register", cust.plain())
+	if err != nil {
+		return custResp, err
+	}
+	custResp.MapHttpRespToResp(httpResp)
+	return custResp, nil
 }
 
-func (this EwalletManager) CustomerUpdate(cust Customer) (*http.Response, error) {
-	return this.sendEWRequest("Update", cust.plain())
-}
-func (this EwalletManager) CustomerCheckBylogin(custLogin string) (*http.Response, error) {
+func (this EwalletManager) CustomerDelete(custLogin string) (CustomerResponse, error) {
 	cust := this.Customers[custLogin]
-	return this.sendEWRequest("Check", cust.plain())
+	custResp := CustomerResponse{}
+	httpResp, err := this.sendEWRequest("Delete", cust.plain())
+	if err != nil {
+		return custResp, err
+	}
+	custResp.MapHttpRespToResp(httpResp)
+	return custResp, nil
 }
 
-func (this EwalletManager) CustomerCheck(cust Customer, addToCollection bool) (*http.Response, error) {
-	return this.sendEWRequest("Check", cust.plain())
+func (this EwalletManager) CustomerUpdate(cust Customer) (CustomerResponse, error) {
+	custResp := CustomerResponse{}
+	httpResp, err := this.sendEWRequest("Update", cust.plain())
+	if err != nil {
+		return custResp, err
+	}
+	custResp.MapHttpRespToResp(httpResp)
+	return custResp, nil
+}
+func (this EwalletManager) CustomerCheckBylogin(custLogin string) (CustomerResponse, error) {
+	cust := this.Customers[custLogin]
+	custResp := CustomerResponse{}
+	httpResp, err := this.sendEWRequest("Check", cust.plain())
+	if err != nil {
+		return custResp, err
+	}
+	custResp.MapHttpRespToResp(httpResp)
+	return custResp, nil
+}
+
+func (this EwalletManager) CustomerCheck(cust Customer, addToCollection bool) (CustomerResponse, error) {
+	custResp := CustomerResponse{}
+	httpResp, err := this.sendEWRequest("Check", cust.plain())
+	if err != nil {
+		return custResp, err
+	}
+	custResp.MapHttpRespToResp(httpResp)
+	return custResp, nil
 }
 
 /*
@@ -221,22 +273,73 @@ Send Ewallet Request
 /*//////////////
 Payments command
 */
-func (this EwalletManager) Unblock(order Payment) (*http.Response, error) {
+func (this EwalletManager) Unblock(order Payment) (OrderResponse, error) {
 	return order.Unblock(this.getAPI(), this.Merchant)
 }
 
-func (this EwalletManager) Refund(order Payment) (*http.Response, error) {
+func (this EwalletManager) Refund(order Payment) (OrderResponse, error) {
 	return order.Refund(this.getAPI(), this.Merchant)
 }
 
-func (this EwalletManager) Charge(order Payment) (*http.Response, error) {
+func (this EwalletManager) Charge(order Payment) (OrderResponse, error) {
 	return order.Charge(this.getAPI(), this.Merchant)
 }
 
-func (this EwalletManager) PayStatus(order Payment) (*http.Response, error) {
+func (this EwalletManager) PayStatus(order Payment) (OrderResponse, error) {
 	return order.PayStatus(this.getAPI(), this.Merchant)
 }
 
 /*
 Payments command
 */ //////////////
+
+/*///////
+Responses
+*/
+
+type CustomerResponse struct {
+	Success   bool   `xml:"Success,attr"`
+	ErrorCode string `xml:"ErrrCode,attr"`
+	VWUserLgn string `xml:"VWUserLgn,attr"`
+}
+
+type CardResponse struct {
+	CustomerResponse
+	CardId   string `xml:"CardId,attr"`
+	CardName string `xml:"CardName,attr"`
+}
+
+type CardListResponse struct {
+	CustomerResponse
+	Cards []Item `xml:"Item"`
+}
+
+type Item struct {
+	CardName   string `xml:"CardName,attr"`
+	CardId     string `xml:"CardId,attr"`
+	CardHolder string `xml:"CardHolder,attr"`
+	Status     string `xml:"Status,attr"`
+	NoCVV      bool   `xml:"NoCVV,attr"`
+	Expired    bool   `xml:"Expired,attr"`
+}
+
+/*
+Responses
+*/ ///////
+func (resp *CustomerResponse) MapHttpRespToResp(httpResp *http.Response) error {
+	byteBody, err := BodyByte(httpResp)
+	if err != nil {
+		return err
+	}
+	xml.Unmarshal(byteBody, &resp)
+	return nil
+}
+
+func (resp *CardResponse) MapHttpRespToResp(httpResp *http.Response) error {
+	byteBody, err := BodyByte(httpResp)
+	if err != nil {
+		return err
+	}
+	xml.Unmarshal(byteBody, &resp)
+	return nil
+}
