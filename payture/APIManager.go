@@ -3,16 +3,16 @@ package payture
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 )
 
 type APIManager struct {
-	Merchant Merchant
+	OrderManager
 }
 
-func (this APIManager) getAPI() string {
-	return "api"
+func APIService(merch Merchant) (api APIManager) {
+	api.apiType = "api"
+	api.merchant = merch
+	return
 }
 
 type PayAPITransaction struct {
@@ -30,6 +30,7 @@ type PayInfo struct {
 }
 
 func (info PayInfo) plain() string {
+
 	return fmt.Sprintf("PAN=%s;EMonth=%s;EYear=%s;CardHolder=%s;SecureCode=%s;OrderId=%s;Amount=%s", info.PAN, info.Card.EMonth,
 		info.Card.EYear, info.Card.CardHolder, info.Card.SecureCode, info.Order.OrderId, info.Order.Amount)
 }
@@ -44,65 +45,18 @@ func (payTr PayAPITransaction) content() map[string][]string {
 		"CustomFields": {payTr.CustomerFields.plain()}}
 }
 
-/*//////////////
-Payments command
-*/
-/*
-func (this APIManager) Unblock(order Payment) (*http.Response, error) {
-	return order.Unblock(this.getAPI(), this.Merchant)
-}*/
-
-func (this APIManager) Unblock(order Payment) (OrderResponse, error) {
-	return order.Unblock(this.getAPI(), this.Merchant)
-}
-
-func (this APIManager) Refund(order Payment) (OrderResponse, error) {
-	return order.Refund(this.getAPI(), this.Merchant)
-}
-
-func (this APIManager) Charge(order Payment) (OrderResponse, error) {
-	return order.Charge(this.getAPI(), this.Merchant)
-}
-
-func (this APIManager) GetState(order Payment) (OrderResponse, error) {
-	return order.GetState(this.Merchant)
-}
-
-/*
-Payments command
-*/ //////////////
 func (this APIManager) Pay(order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (APIResponses, error) {
-	apiResponse := APIResponses{}
-	httpResp, err := this.sendApi("Pay", order, info, additional, custKey, paytureId)
-	if err != nil {
-		return apiResponse, err
-	}
-	body, err2 := BodyByte(httpResp)
-	if err2 != nil {
-		return apiResponse, err2
-	}
-	apiResponse.ParseAPIByte(body)
-	return apiResponse, nil
+	return this.sendApi("Pay", order, info, additional, custKey, paytureId)
 }
 
 func (this APIManager) Block(order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (APIResponses, error) {
-	apiResponse := APIResponses{}
-	httpResp, err := this.sendApi("Block", order, info, additional, custKey, paytureId)
-	if err != nil {
-		return apiResponse, err
-	}
-	body, err2 := BodyByte(httpResp)
-	if err2 != nil {
-		return apiResponse, err2
-	}
-	apiResponse.ParseAPIByte(body)
-	return apiResponse, nil
+	return this.sendApi("Block", order, info, additional, custKey, paytureId)
 }
 
-func (this APIManager) sendApi(cmd string, order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (*http.Response, error) {
-	var url = this.Merchant.Host + "/" + this.getAPI() + "/" + cmd
-	var pay = PayAPITransaction{Order: order, PaymentInfo: info, CustomerFields: additional, CustomerKey: custKey, Key: this.Merchant.Key, PaytureId: paytureId}
-	return sendRequestFormer(url, pay)
+func (this APIManager) sendApi(cmd string, order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (apiResponse APIResponses, err error) {
+	var pay = PayAPITransaction{Order: order, PaymentInfo: info, CustomerFields: additional, CustomerKey: custKey, Key: this.merchant.Key, PaytureId: paytureId}
+	err = sendRequestFormerMap(&apiResponse, this, cmd, pay)
+	return
 }
 
 /*////////////
@@ -128,16 +82,7 @@ type AdditioanalInfo struct {
 API Responses
 */ ///////////
 
-func (response *APIResponses) ParseAPI(resp *http.Response) {
-	//defer resp.Body.Close()
-	//var card GetList
-	body, err := ioutil.ReadAll(resp.Body)
-	xml.Unmarshal(body, &response)
-	fmt.Println(response)
-	fmt.Println(err)
-}
-
-func (response *APIResponses) ParseAPIByte(respBody []byte) {
-	xml.Unmarshal(respBody, &response)
-	fmt.Println(response)
+func (resp *APIResponses) Unwrap(byteBody []byte) error {
+	xml.Unmarshal(byteBody, &resp)
+	return nil
 }

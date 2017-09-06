@@ -4,27 +4,25 @@ import (
 	"net/http"
 )
 
-func APIThreeDSPAY(merch Merchant, orderId string, paRes string) (*http.Response, error) {
-	return send3DS(merch, "Pay3DS", orderId, paRes)
+func (this APIManager) APIThreeDSPAY(orderId string, paRes string) (*http.Response, error) {
+	return this.send3DS("Pay3DS", orderId, paRes)
 }
 
-func APIThreeDSBlock(merch Merchant, orderId string, paRes string) (*http.Response, error) {
-	return send3DS(merch, "Block3DS", orderId, paRes)
+func (this APIManager) APIThreeDSBlock(orderId string, paRes string) (*http.Response, error) {
+	return this.send3DS("Block3DS", orderId, paRes)
 }
 
-func send3DS(merch Merchant, method string, orderId string, paRes string) (*http.Response, error) {
-	url := merch.Host + "/api/" + method
-	params := make(map[string][]string)
-	params["Key"] = []string{merch.Key}
-	params["OrderId"] = []string{orderId}
-	params["PaRes"] = []string{paRes}
-	return sendRequest(url, params)
+func (this APIManager) send3DS(method string, orderId string, paRes string) (*http.Response, error) {
+	params := map[string][]string{
+		"Key":     []string{this.merchant.Key},
+		"OrderId": []string{orderId},
+		"PaRes":   []string{paRes}}
+	return sendRequest(this, method, params)
 }
 
-func PaySubmit3DS(merch Merchant, md string, paRes string) (*http.Response, error) {
-	url := merch.Host + "/vwapi/PaySubmit3DS"
-	params := make(map[string][]string)
-	params["MD"] = []string{md}
-	params["PaRes"] = []string{paRes}
-	return sendRequest(url, params)
+func (this EwalletManager) PaySubmit3DS(md string, paRes string) (*http.Response, error) {
+	params := map[string][]string{
+		"MD":    []string{md},
+		"PaRes": []string{paRes}}
+	return sendRequest(this, "PaySubmit3DS", params)
 }

@@ -15,10 +15,6 @@ const (
 	SESSION_BLOCK string = "Block"
 )
 
-type APIType interface {
-	getAPI() string
-}
-
 type Merchant struct {
 	Key, Password, Host string
 }
@@ -26,6 +22,10 @@ type Merchant struct {
 type Payment struct {
 	OrderId string
 	Amount  string
+}
+
+type UrlProvider interface {
+	getReqUrl(cmd string) string
 }
 
 func (order Payment) plain() string {
@@ -59,117 +59,35 @@ func (dict CustParams) plain() string {
 	return resStr
 }
 
-func sendRequestFormer(url string, params ParamsFormer) (*http.Response, error) {
-	return sendRequest(url, params.content())
+func sendRequestFormer(reqUrl UrlProvider, cmd string, params ParamsFormer) (*http.Response, error) {
+	return sendRequest(reqUrl, cmd, params.content())
 }
 
-func sendRequest(url string, params map[string][]string) (*http.Response, error) {
-	resp, err := http.PostForm(url, params)
+func sendRequestFormerMap(ret Unwrapper, reqUrl UrlProvider, cmd string, params ParamsFormer) error {
+	return sendRequestAndMap(ret, params.content(), reqUrl, cmd)
+}
+
+func sendRequest(reqUrl UrlProvider, cmd string, params map[string][]string) (*http.Response, error) {
+	resp, err := http.PostForm(reqUrl.getReqUrl(cmd), params)
 	return resp, err
 }
 
-func (order Payment) Charge(apiType string, merch Merchant) (OrderResponse, error) {
-	url := merch.Host + "/" + apiType + "/Charge"
-	key := "Key"
-	if apiType == "vwapi" {
-		key = "VWID"
-	}
-	params := make(map[string][]string)
-	params[key] = []string{merch.Key}
-	params["OrderId"] = []string{order.OrderId}
-	if apiType == "vwapi" || apiType == "apim" {
-		params["Password"] = []string{merch.Password}
-		params["Amount"] = []string{order.Amount}
-	}
-
-	httpResp, err := sendRequest(url, params)
+func sendRequestAndMap(ret Unwrapper, params map[string][]string, reqUrl UrlProvider, cmd string) (err error) {
+	httpResp, err := http.PostForm(reqUrl.getReqUrl(cmd), params)
+	byteBody, err := BodyByte(httpResp)
 	if err != nil {
-		return OrderResponse{}, err
+		return
 	}
-	orderResp := OrderResponse{}
-	orderResp.MapHttpRespToResp(httpResp)
-	return orderResp, nil
+	return ret.Unwrap(byteBody)
 }
 
-func (order Payment) Unblock(apiType string, merch Merchant) (OrderResponse, error) {
-	url := merch.Host + "/" + apiType + "/Unblock"
-	key := "Key"
-	if apiType == "vwapi" {
-		key = "VWID"
-	}
-	params := make(map[string][]string)
-	params[key] = []string{merch.Key}
-	params["OrderId"] = []string{order.OrderId}
-	params["Amount"] = []string{order.Amount}
-
-	if apiType == "vwapi" || apiType == "apim" {
-		params["Password"] = []string{merch.Password}
-	}
-	httpResp, err := sendRequest(url, params)
+func MapHttpRespToResp(ret Unwrapper, httpResp *http.Response) error {
+	byteBody, err := BodyByte(httpResp)
 	if err != nil {
-		return OrderResponse{}, err
+		return err
 	}
-	orderResp := OrderResponse{}
-	orderResp.MapHttpRespToResp(httpResp)
-	return orderResp, nil
-}
-
-func (order Payment) Refund(apiType string, merch Merchant) (OrderResponse, error) {
-	url := merch.Host + "/" + apiType + "/Refund"
-	params := make(map[string][]string)
-	if apiType == "vwapi" {
-		params = make(map[string][]string)
-		params["VWID"] = []string{merch.Key}
-		params["DATA"] = []string{fmt.Sprintf("OrderId=%s;Password=%s;Amount=%s", order.OrderId, merch.Password, order.Amount)}
-	} else {
-		params = make(map[string][]string)
-		params["Key"] = []string{merch.Key}
-		params["OrderId"] = []string{order.OrderId}
-		params["Amount"] = []string{order.Amount}
-		params["Password"] = []string{merch.Password}
-	}
-	httpResp, err := sendRequest(url, params)
-	if err != nil {
-		return OrderResponse{}, err
-	}
-	orderResp := OrderResponse{}
-	orderResp.MapHttpRespToResp(httpResp)
-	return orderResp, nil
-}
-
-func (order Payment) GetState(merch Merchant) (OrderResponse, error) {
-	url := merch.Host + "/api/GetState"
-	params := make(map[string][]string)
-	params["Key"] = []string{merch.Key}
-	params["OrderId"] = []string{order.OrderId}
-	httpResp, err := sendRequest(url, params)
-	if err != nil {
-		return OrderResponse{}, err
-	}
-	orderResp := OrderResponse{}
-	orderResp.MapHttpRespToResp(httpResp)
-	return orderResp, nil
-}
-
-func (order Payment) PayStatus(apiType string, merch Merchant) (OrderResponse, error) {
-	url := merch.Host + "/" + apiType + "/PayStatus"
-	params := make(map[string][]string)
-	params["Key"] = []string{merch.Key}
-	params["OrderId"] = []string{order.OrderId}
-
-	if apiType == "vwapi" {
-		params = make(map[string][]string)
-		params["VWID"] = []string{merch.Key}
-		params["DATA"] = []string{fmt.Sprintf("OrderId=%s", order.OrderId)}
-	}
-
-	httpResp, err := sendRequest(url, params)
-	if err != nil {
-		return OrderResponse{}, err
-	}
-	orderResp := OrderResponse{}
-	orderResp.MapHttpRespToResp(httpResp)
-	return orderResp, nil
+	ret.Unwrap(byteBody)
+	return nil
 }
 
 func (order Payment) GenerateId(fixedPart string) string {
@@ -225,11 +143,45 @@ type OrderResponse struct {
 	NewAmount int64  `xml:"NewAmount,attr"`
 }
 
-func (resp *OrderResponse) MapHttpRespToResp(httpResp *http.Response) error {
-	byteBody, err := BodyByte(httpResp)
-	if err != nil {
-		return err
-	}
+func (resp *OrderResponse) Unwrap(byteBody []byte) error {
 	xml.Unmarshal(byteBody, &resp)
 	return nil
+}
+
+/*
+Init  Response
+*/
+
+type InitResponse struct {
+	SessionId string `xml:"SessionId,attr"`
+	Success   string `xml:"Success,attr"`
+	Amount    int64  `xml:"Amount,attr"`
+	ErrorCode string `xml:"ErrCode,attr"`
+	OrderId   string `xml:"OrderId,attr"`
+}
+
+func (resp *InitResponse) Unwrap(byteBody []byte) error {
+	xml.Unmarshal(byteBody, &resp)
+	return nil
+}
+
+/*
+Digital Responses
+*/
+
+type DigitalResponse struct {
+	Success   string `xml:"Success,attr"`
+	ErrorCode string `xml:"ErrCode,attr"`
+	OrderId   string `xml:"OrderId,attr"`
+	Amount    int64  `xml:"Amount,attr"`
+	Key       string `xml:"Key,attr"`
+}
+
+func (resp *DigitalResponse) Unwrap(byteBody []byte) error {
+	xml.Unmarshal(byteBody, &resp)
+	return nil
+}
+
+type Unwrapper interface {
+	Unwrap(byteBody []byte) error
 }

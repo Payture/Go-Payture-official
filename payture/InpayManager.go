@@ -2,44 +2,22 @@ package payture
 
 import (
 	"fmt"
-	"net/http"
 )
 
 type InpayManager struct {
-	Merchant Merchant
+	OrderManager
 }
 
-func (this InpayManager) getAPI() string {
-	return "apim"
+func InPayService(merch Merchant) (inpay InpayManager) {
+	inpay.merchant = merch
+	inpay.apiType = "apim"
+	return
 }
 
-func (this InpayManager) Init(order Payment, sessionType string, tag string, lang string, ip string, urlReturn string, additionalFields CustParams) (*http.Response, error) {
-	url := this.Merchant.Host + "/" + this.getAPI() + "/Init"
-	params := make(map[string][]string)
-	params["Key"] = []string{this.Merchant.Key}
-	params["Data"] = []string{order.plain() + fmt.Sprintf("SessionType=%s;Language=%s;IP=%s;TemplateTag=%s;Url=%s", sessionType, lang, ip, tag, urlReturn) + additionalFields.plain()}
-	return sendRequest(url, params)
+func (this InpayManager) Init(order Payment, sessionType string, tag string, lang string, ip string, urlReturn string, additionalFields CustParams) (initResp InitResponse, err error) {
+	params := map[string][]string{
+		"Key":  []string{this.merchant.Key},
+		"Data": []string{order.plain() + fmt.Sprintf("SessionType=%s;Language=%s;IP=%s;TemplateTag=%s;Url=%s", sessionType, lang, ip, tag, urlReturn) + additionalFields.plain()}}
+	err = sendRequestAndMap(&initResp, params, this, "Init")
+	return
 }
-
-/*//////////////
-Payments command
-*/
-func (this InpayManager) Unblock(order Payment) (OrderResponse, error) {
-	return order.Unblock(this.getAPI(), this.Merchant)
-}
-
-func (this InpayManager) Refund(order Payment) (OrderResponse, error) {
-	return order.Refund(this.getAPI(), this.Merchant)
-}
-
-func (this InpayManager) Charge(order Payment) (OrderResponse, error) {
-	return order.Charge(this.getAPI(), this.Merchant)
-}
-
-func (this InpayManager) PayStatus(order Payment) (OrderResponse, error) {
-	return order.PayStatus(this.getAPI(), this.Merchant)
-}
-
-/*
-Payments command
-*/ //////////////
