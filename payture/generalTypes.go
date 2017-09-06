@@ -185,3 +185,22 @@ func (resp *DigitalResponse) Unwrap(byteBody []byte) error {
 type Unwrapper interface {
 	Unwrap(byteBody []byte) error
 }
+
+type requestParams struct {
+	requestParams map[string][]string
+	created       bool
+}
+
+func (req requestParams) createSet() requestParams {
+	req.requestParams = make(map[string][]string)
+	req.created = true
+	return req
+}
+
+func (req requestParams) set(key string, data string) requestParams {
+	if !req.created {
+		req.createSet()
+	}
+	req.requestParams[key] = []string{data}
+	return req
+}
