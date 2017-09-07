@@ -5,16 +5,19 @@ import (
 	"fmt"
 )
 
+//APIManager type provide the access for calling API Service  in Payture system.
 type APIManager struct {
 	OrderManager
 }
 
+//APIService method returned the APIManager.
 func APIService(merch Merchant) (api APIManager) {
 	api.apiType = "api"
 	api.merchant = merch
 	return
 }
 
+//PayAPITransaction collection of fields that you must supplied for make pay or block operation.
 type PayAPITransaction struct {
 	Key, CustomerKey string
 	CustomerFields   CustParams
@@ -23,6 +26,7 @@ type PayAPITransaction struct {
 	Order            Payment
 }
 
+//PayInfo detailed information about transaction.
 type PayInfo struct {
 	Card  Card
 	Order Payment
@@ -36,21 +40,22 @@ func (info PayInfo) plain() string {
 }
 
 func (payTr PayAPITransaction) content() map[string][]string {
-	return map[string][]string{
-		"Key":          {payTr.Key},
-		"OrderId":      {payTr.Order.OrderId},
-		"Amount":       {payTr.Order.Amount},
-		"CustomerKey":  {payTr.CustomerKey},
-		"PayInfo":      {payTr.PaymentInfo.plain()},
-		"CustomFields": {payTr.CustomerFields.plain()}}
+	return reqPrms{}.set(KEY, payTr.Key).
+		set(ORDERID, payTr.Order.OrderId).
+		set(AMOUNT, payTr.Order.Amount).
+		set(CUSTKEY, payTr.CustomerKey).
+		set(PAYINFO, payTr.PaymentInfo.plain()).
+		set(CUSTFIELDS, payTr.CustomerFields.plain()).get()
 }
 
+//Pay makes one stage charge of funds from card.
 func (this APIManager) Pay(order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (APIResponses, error) {
-	return this.sendApi("Pay", order, info, additional, custKey, paytureId)
+	return this.sendApi(PAY, order, info, additional, custKey, paytureId)
 }
 
+//Block blocking funds on card. For two-stage charge of funds from card.s
 func (this APIManager) Block(order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (APIResponses, error) {
-	return this.sendApi("Block", order, info, additional, custKey, paytureId)
+	return this.sendApi(BLOCK, order, info, additional, custKey, paytureId)
 }
 
 func (this APIManager) sendApi(cmd string, order Payment, info PayInfo, additional CustParams, custKey string, paytureId string) (apiResponse APIResponses, err error) {
@@ -59,9 +64,6 @@ func (this APIManager) sendApi(cmd string, order Payment, info PayInfo, addition
 	return
 }
 
-/*////////////
-API Responses
-*/
 type APIResponses struct {
 	AddInfo   []AdditioanalInfo `xml:"AddInfo"`
 	Success   bool              `xml:"Success,attr"`
@@ -77,10 +79,6 @@ type AdditioanalInfo struct {
 	Key   string `xml:"Key,attr"`
 	Value string `xml:"Value,attr"`
 }
-
-/*
-API Responses
-*/ ///////////
 
 func (resp *APIResponses) Unwrap(byteBody []byte) error {
 	xml.Unmarshal(byteBody, &resp)
