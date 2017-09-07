@@ -1,7 +1,6 @@
 package payture
 
 import (
-	"encoding/xml"
 	"fmt"
 )
 
@@ -62,25 +61,4 @@ func (this APIManager) sendApi(cmd string, order Payment, info PayInfo, addition
 	var pay = PayAPITransaction{Order: order, PaymentInfo: info, CustomerFields: additional, CustomerKey: custKey, Key: this.merchant.Key, PaytureId: paytureId}
 	err = sendRequestFormerMap(&apiResponse, this, cmd, pay)
 	return
-}
-
-type APIResponses struct {
-	AddInfo   []AdditioanalInfo `xml:"AddInfo"`
-	Success   bool              `xml:"Success,attr"`
-	ErrorCode string            `xml:"ErrCode,attr"`
-	Amount    int64             `xml:"Amount,attr"`
-	OrderId   string            `xml:"OrderId,attr"`
-	State     string            `xml:"State,attr"`
-	NewAmount string            `xml:"NewAmount,attr"`
-	Key       string            `xml:"Key,attr"`
-}
-
-type AdditioanalInfo struct {
-	Key   string `xml:"Key,attr"`
-	Value string `xml:"Value,attr"`
-}
-
-func (resp *APIResponses) Unwrap(byteBody []byte) error {
-	xml.Unmarshal(byteBody, &resp)
-	return nil
 }
