@@ -9,12 +9,6 @@ import (
 	"strconv"
 )
 
-const (
-	SESSION_PAY   string = "Pay"
-	SESSION_ADD   string = "Add"
-	SESSION_BLOCK string = "Block"
-)
-
 type Merchant struct {
 	Key, Password, Host string
 }
@@ -186,21 +180,33 @@ type Unwrapper interface {
 	Unwrap(byteBody []byte) error
 }
 
-type requestParams struct {
+type reqPrms struct {
 	requestParams map[string][]string
 	created       bool
 }
 
-func (req requestParams) createSet() requestParams {
+func (req reqPrms) createSet() reqPrms {
 	req.requestParams = make(map[string][]string)
 	req.created = true
 	return req
 }
 
-func (req requestParams) set(key string, data string) requestParams {
+func (req reqPrms) set(key string, data string) reqPrms {
 	if !req.created {
-		req.createSet()
+		req = req.createSet()
 	}
 	req.requestParams[key] = []string{data}
 	return req
+}
+
+func (req reqPrms) get() map[string][]string {
+	return req.requestParams
+}
+
+func (req reqPrms) setKey(merch Merchant) reqPrms {
+	return req.set(KEY, merch.Key)
+}
+
+func (req reqPrms) setPass(merch Merchant) reqPrms {
+	return req.set(PASSWORD, merch.Password)
 }
