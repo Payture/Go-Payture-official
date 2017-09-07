@@ -1,7 +1,6 @@
 package payture
 
 import (
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -127,53 +126,6 @@ func Parse(resp *http.Response) (responseText string, err error) {
 func ParseByteBody(body []byte) (responseText string) {
 	responseText = fmt.Sprintf("%s", body)
 	return responseText
-}
-
-type OrderResponse struct {
-	Success   bool   `xml:"Success,attr"`
-	OrderId   string `xml:"OrderId,attr"`
-	Amount    int64  `xml:"Amount,attr"`
-	ErrCode   string `xml:"ErrCode,attr"`
-	NewAmount int64  `xml:"NewAmount,attr"`
-}
-
-func (resp *OrderResponse) Unwrap(byteBody []byte) error {
-	xml.Unmarshal(byteBody, &resp)
-	return nil
-}
-
-/*
-Init  Response
-*/
-
-type InitResponse struct {
-	SessionId string `xml:"SessionId,attr"`
-	Success   string `xml:"Success,attr"`
-	Amount    int64  `xml:"Amount,attr"`
-	ErrorCode string `xml:"ErrCode,attr"`
-	OrderId   string `xml:"OrderId,attr"`
-}
-
-func (resp *InitResponse) Unwrap(byteBody []byte) error {
-	xml.Unmarshal(byteBody, &resp)
-	return nil
-}
-
-/*
-Digital Responses
-*/
-
-type DigitalResponse struct {
-	Success   string `xml:"Success,attr"`
-	ErrorCode string `xml:"ErrCode,attr"`
-	OrderId   string `xml:"OrderId,attr"`
-	Amount    int64  `xml:"Amount,attr"`
-	Key       string `xml:"Key,attr"`
-}
-
-func (resp *DigitalResponse) Unwrap(byteBody []byte) error {
-	xml.Unmarshal(byteBody, &resp)
-	return nil
 }
 
 type Unwrapper interface {
