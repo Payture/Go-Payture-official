@@ -89,7 +89,7 @@ func (this EwalletManager) RemoveCustomerFromCollection(custLogin string) (Ewall
 }
 
 //InitTransaction create and returned Session in Payture system by which the customer can make a payment or can registered card.
-func (this EwalletManager) InitTransaction(custLogin string, sessionType string, ip string, order Payment, tag string, lang string, cardId string) (initResp InitResponse, err error) {
+func (this EwalletManager) Init(custLogin string, sessionType string, ip string, order Payment, tag string, lang string, cardId string) (initResp InitResponse, err error) {
 	cust := this.Customers[custLogin]
 	err = this.sendEWRequestMap(&initResp, INIT, cust.plain()+order.plain()+fmt.Sprintf("IP=%s;TemplateTag=%s;Language=%s;CardId=%s;SessionType=%s;CustomField=Field;", ip,
 		tag, lang, cardId, sessionType /*add mooooooreee*/))
