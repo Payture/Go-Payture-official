@@ -318,19 +318,57 @@ httpResponse, err := ewManager.SendCode(custlogin)
 
 
 ## DigitalWalletManager <a id="digManager">
-DigitalWalletManager is struct that consist of these 'managers':
+DigitalWalletManager is struct that consist of following 'managers' (we're suppose - as before that - 'merchant' variable already created at moment):
 
-* AppleManager 
-* AndroidManager
-* MasterPassManager
+* AppleManager - is intended to get correct accesses for pay/block methods for Apple system. For creation instance of this struct invoke AppleService method:
+```go
+appleManager := payture.AppleService(merchant)
+```
+* AndroidManager - is intended to get correct accesses for pay/block methods for Android system.
+ For creation instance of this struct invoke AppleService method:
+```go
+androidManager := payture.AndroidService(merchant)
+```
+* MasterPassManager - is intended to get correct accesses for pay/block methods for Master Pass system.
+ For creation instance of this struct invoke AppleService method:
+```go
+mpManager := payture.MasterPassService(merchant)
+```
 
 All of these  provided accesses to methods:
 
 | Method's name  | Definition                                                |
 | -------------- | --------------------------------------------------------- |
-| Pay            | Method for one-stage charged-off fund.                    |
-| Block          | Fist step in two-stage  charged-off operation.            |
+| [Pay](#digitpay)            | Method for one-stage charged-off fund.                    |
+| [Block](#digblock)          | Fist step in two-stage  charged-off operation.            |
 
+### DigitalWalletManager's methods description <a id="appleManagerMethods">
+For all of above services the way of calling specified methods are the same. Result of calling these methods are instance of DigitalResponse struct which contains parsed response from Payture server.
 
+#### Pay <a id="digitpay">
+
+```go
+order := payture.Payment{Amount : "1000", OrderId : "43371575325653242457767057674540671"}
+token := "abcdefg"
+secureCode := "125"
+//for apple and android - no needs for securecode
+digitalResponse, err := digitalManager.Pay(order, token, nil) 
+
+//for master pass secure code is required
+digitalResponse, err := digitalManager.Pay(order, token, secureCode) 
+```
+
+#### Block <a id="digitblock">
+
+```go
+order := payture.Payment{Amount : "1000", OrderId: "43371575325653242457767057674540671"}
+token := "abcdefg"
+secureCode := "125"
+//for apple and android - no needs for securecode
+digitalResponse, err := digitalManager.Block(order, token, nil) 
+
+//for master pass secure code is required
+digitalResponse, err := digitalManager.Block(order, token, secureCode) 
+```
 Visit our [site](http://payture.com/) for more information.
 You can find our contact [here](http://payture.com/kontakty/).
