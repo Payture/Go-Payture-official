@@ -67,6 +67,9 @@ func sendRequest(reqUrl UrlProvider, cmd string, params map[string][]string) (*h
 
 func sendRequestAndMap(ret Unwrapper, params map[string][]string, reqUrl UrlProvider, cmd string) (err error) {
 	httpResp, err := http.PostForm(reqUrl.getReqUrl(cmd), params)
+	if err != nil {
+		return
+	}
 	byteBody, err := BodyByte(httpResp)
 	if err != nil {
 		return
